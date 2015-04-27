@@ -5,15 +5,17 @@ date: 2015-04-26 - Part 2
 output: pdf_document
 ---
 
-Here, we analyse the effect of vitamin C on tooth growth in guinea pigs.
+In this project we analyse the effect of vitamin C on tooth growth in guinea pigs using R.
 
-First, we load the ToothGrowth dataset in R, rename it to tg, and inspect it.
+First, we load the ToothGrowth dataset from the datasets package, rename it to tg, and inspect it.
 
 ```{r}
 library(datasets)
 data("ToothGrowth")
 tg = ToothGrowth
-head(tg)
+tg$dose = as.factor(tg$dose)
+dim(tg)
+head(tg, 3)
 summary(tg)
 ```
 
@@ -28,7 +30,9 @@ ggplot(aes(x = supp, y = len), data = tg) +
     geom_boxplot(aes(fill = supp)) + facet_wrap(~ dose)
 ```
 
-It appears that, at the two lower doses of vitamin C, tooth length is shorter when delivered as ascorbic acid. At the highest dose of vitamin C, both delivery methods (ascorbic acid or orange juice) are equivalent. It also appears that there is a dose-dependent effect (the highest the dose the longest the tooth) irrespective of delivery method, but also  that this effect seem to plateu at the highest dose with orange juice. But let's inspect these conclusions using t-tests and confidence intervals.
+It seems that, at the two lower doses of vitamin C, tooth length is shorter when delivered as ascorbic acid. At the highest dose of vitamin C, both delivery methods (ascorbic acid or orange juice) appear to be equivalent. It also seems that there is a dose-dependent effect (the highest the dose the longest the tooth) irrespective of delivery method; however this effect seems to plateau at the highest dose of vitamin C when delivered as orange juice.
+
+Let's verify these preliminary conclusions by comparing these groups using t-tests.
 
 First, we check whether the groups that we are going to compare meet the assumption of equal variance because it does not look like so in the previous plot.
 
@@ -40,7 +44,7 @@ tg %>% group_by(dose, supp) %>%
   summarise(n = n(), len.mean = mean(len), len.var = var(len))
 ```
 
-It is clear, from the summary table, that for most group comparisons the assumption of equal variance is not a valid one. Therefore, we will proceed accordingly by NOT assuming equal variance in all of the tests that follow.
+It is clear, from the summary table above, that for most group comparisons the assumption of equal variance is not a valid one. Therefore, we will proceed accordingly by NOT assuming equal variance in all of the t-tests that follow.
 
 First, we group the observations according to delivery method and dose of vitamin C.
 
@@ -55,13 +59,17 @@ vc.high = filter(tg, supp == 'VC' & dose == 2)
 
 Last, we perform group comparisons using t-tests.
 
+First, we compare delivery methods at each dose of vitamin C.
+
 ```{r}
 t.test(oj.low$len, vc.low$len, paired = FALSE, var.equal = FALSE)
 t.test(oj.mid$len, vc.mid$len, paired = FALSE, var.equal = FALSE)
 t.test(oj.high$len, vc.high$len, paired = FALSE, var.equal = FALSE)
 ```
 
-Indeed, at the two lower doses of vitamin C, tooth length is significantly shorter (p-val < 0.05) when delivered as ascorbic acid. At the highest dose of vitamin C, both delivery methods (ascorbic acid or orange juice) are equivalent (i.e., we can't reject the null hypothesis with alpha = 0.05).
+Indeed, as concluded previously, tooth length is significantly shorter (p-val < 0.05) when delivered as ascorbic acid at the two lower doses of vitamin C. On the contrary, at the highest dose of vitamin C, both delivery methods (ascorbic acid or orange juice) are equivalent (i.e., we can't reject the null hypothesis with alpha = 0.05).
+
+Second, we compare doses of vitamin C at each delivery method.
 
 ```{r}
 t.test(oj.low$len, oj.mid$len, paired = FALSE, var.equal = FALSE)
@@ -70,4 +78,4 @@ t.test(vc.low$len, vc.mid$len, paired = FALSE, var.equal = FALSE)
 t.test(vc.mid$len, vc.high$len, paired = FALSE, var.equal = FALSE)
 ```
 
-Moreover, as evidenced in the t-tests above, there is a significant dose-dependent effect (the highest the dose the longest the tooth) irrespective of delivery method, but also  that this effect seem to plateu, i.e., is no longer significant at the highest dose with orange juice.
+Indeed, as concluded previously, there is a dose-dependent effect (the highest the dose the longest the tooth) irrespective of delivery method; however this effect seems to plateau (i.e., is no longer significant) at the highest dose of vitamin C when delivered as orange juice.
